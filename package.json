@@ -1,16 +1,30 @@
 {
   "name": "itscalledsoccer",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A library for interacting with the ASA api",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
+    "build": "babel src -d dist",
+    "watch": "chokidar \"src/*.js\" -c \"npm run build\"",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["soccer"],
+  "keywords": [
+    "soccer"
+  ],
   "author": "Doug Wade <doug@dougwade.io>",
   "license": "MIT",
   "repository": {
     "type": "git",
-	"url": "https://github.com/doug-wade/itscalledsoccer"
+    "url": "https://github.com/doug-wade/itscalledsoccer"
+  },
+  "dependencies": {
+    "core-js": "^3.21.1",
+    "isomorphic-fetch": "^3.0.0"
+  },
+  "devDependencies": {
+    "@babel/cli": "^7.17.6",
+    "@babel/core": "^7.17.5",
+    "@babel/preset-env": "^7.16.11",
+    "chokidar-cli": "^3.0.0"
   }
 }

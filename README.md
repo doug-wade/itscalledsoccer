@@ -28,5 +28,5 @@ Any of the `get*` methods can be used to retrieve the same data made available i
 
 ```javascript
 // Get all players named "Roldan"
-asaPlayers = client.getPlayers({ names: "Roldan" });
+asaPlayers = await client.getPlayers({ names: "Roldan" });
 ```
