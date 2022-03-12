@@ -19,6 +19,7 @@
   },
   "dependencies": {
     "core-js": "^3.21.1",
+    "fuse.js": "^6.5.3",
     "isomorphic-fetch": "^3.0.0"
   },
   "devDependencies": {
