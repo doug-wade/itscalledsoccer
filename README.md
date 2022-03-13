@@ -26,7 +26,16 @@ const client = new Client();
 
 Any of the `get*` methods can be used to retrieve the same data made available in the [American Soccer Analysis app](https://app.americansocceranalysis.com/). Partial matches or abbreviations are accepted for any player or team names. For most methods, arguments _must be named_. A few examples are below.
 
+### getPlayers
+
 ```javascript
 // Get all players named "Roldan"
-asaPlayers = await client.getPlayers({ names: "Roldan" });
+const asaPlayers = await client.getPlayers({ names: "Roldan" });
+```
+
+### getManagers
+
+```javascript
+// Get manager Brian Schmetzer
+const asaManager = await client.getManagers({ ids: ["odMXxreMYL"] });
 ```
