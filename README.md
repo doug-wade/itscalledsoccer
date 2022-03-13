@@ -39,3 +39,24 @@ const asaPlayers = await client.getPlayers({ names: "Roldan" });
 // Get manager Brian Schmetzer
 const asaManager = await client.getManagers({ ids: ["odMXxreMYL"] });
 ```
+
+### getTeams
+
+```javascript
+// Get all MLS stadia
+const asaTeam = await client.getStadia({ leagues: ["mls"] });
+```
+
+### getReferees
+
+```javascript
+// Get all referees
+const asaReferees = await client.getReferees({});
+```
+
+### getStadia
+
+```javascript
+// Get all stadia
+const asaStadia = await client.getStadia({});
+```

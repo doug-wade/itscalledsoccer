@@ -19,7 +19,9 @@ export default class Client {
   /* utils */
   async #getDependentEntities({ entityTypes }) {
     console.assert(
-      entityTypes.every((entityType) => ENTITY_TYPES.includes(entityType)),
+      entityTypes.every((entityType) =>
+        Object.values(ENTITY_TYPES).includes(entityType)
+      ),
       `entityTypes must be an array of ENTITY_TYPES; getDependentEntities got ${entityTypes}`
     );
 
@@ -38,7 +40,7 @@ export default class Client {
 
   async #getEntity({ entityType }) {
     console.assert(
-      ENTITY_TYPES.includes(entityType),
+      Object.values(ENTITY_TYPES).includes(entityType),
       `entity must be one of ENTITY_TYPES, getEntity got ${entityType}`
     );
     const pluralEntityType = pluralize(entityType);
@@ -47,7 +49,6 @@ export default class Client {
       LEAGUES.map(async (league) => {
         const url = `${BASE_URL}${league}/${pluralEntityType}`;
 
-        console.log(`getEntity fetching url: ${url}`);
         const result = await fetch(url);
 
         return result.json();
@@ -62,7 +63,7 @@ export default class Client {
 
   async #convertNameToId({ name, entityType }) {
     console.assert(
-      name instanceof String,
+      typeof name === "string",
       `name must be a string, convertNameToId got: ${name}`
     );
     console.assert(
@@ -104,13 +105,13 @@ export default class Client {
       return [];
     }
 
-    const entites = await Promise.all(
+    const entities = await Promise.all(
       names.map((name) =>
         this.#convertNameToId({ name, entityType: ENTITY_TYPES.PLAYER })
       )
     );
 
-    return entites.map((entity) => entity[`${entityType}_id`]);
+    return entities.map((entity) => entity[`${entityType}_id`]);
   }
 
   async #fetchEntity({ leagues, entityType, ids }) {
@@ -123,25 +124,19 @@ export default class Client {
       `entityType must be one of ENTITY_TYPES, fetchEntity got ${entityType}`
     );
     console.assert(
-      ids.every((id) => id instanceof String),
+      Array.isArray(ids),
       `ids must be an array of strings, fetchEntity got ${ids}`
     );
 
     const results = await Promise.all(
-      // TODO: When we have ids, we fetch the data for all leagues, regardless of whether we have a entity
-      // in that league or not. If we haven't already fetched the players, it makes sense for us to only fetch
-      // those leagues that have a player in them.
       leagues.map(async (league) => {
         const url = `${BASE_URL}${league}/${pluralize(entityType)}${
           ids.length ? `?${entityType}_id=${ids.join(",")}` : ""
         }`;
 
-        console.log(`fetchEntity fetching url ${url}`);
-
         const response = await fetch(url);
 
         if (response.status >= 400) {
-          // TODO: We should definitely have better error messaging here.
           throw new Error(
             `Got a bad response from the server: ${response.status}`
           );
@@ -176,11 +171,51 @@ export default class Client {
     });
     const concatenatedIds = [...nameIds, ...ids];
 
-    console.log("concatenatedIds: ", concatenatedIds);
-
     return this.#fetchEntity({
       ids: concatenatedIds,
       entityType: ENTITY_TYPES.MANAGER,
+      leagues,
+    });
+  }
+
+  async getStadia({ leagues = LEAGUES, ids = [], names = [] }) {
+    const nameIds = await this.#getEntityIdsByName({
+      names,
+      entityType: ENTITY_TYPES.STADIUM,
+    });
+    const concatenatedIds = [...nameIds, ...ids];
+
+    return this.#fetchEntity({
+      ids: concatenatedIds,
+      entityType: ENTITY_TYPES.STADIUM,
+      leagues,
+    });
+  }
+
+  async getReferees({ leagues = LEAGUES, ids = [], names = [] }) {
+    const nameIds = await this.#getEntityIdsByName({
+      names,
+      entityType: ENTITY_TYPES.REFEREE,
+    });
+    const concatenatedIds = [...nameIds, ...ids];
+
+    return this.#fetchEntity({
+      ids: concatenatedIds,
+      entityType: ENTITY_TYPES.REFEREE,
+      leagues,
+    });
+  }
+
+  async getTeams({ leagues = LEAGUES, ids = [], names = [] }) {
+    const nameIds = await this.#getEntityIdsByName({
+      names,
+      entityType: ENTITY_TYPES.TEAM,
+    });
+    const concatenatedIds = [...nameIds, ...ids];
+
+    return this.#fetchEntity({
+      ids: concatenatedIds,
+      entityType: ENTITY_TYPES.TEAM,
       leagues,
     });
   }
