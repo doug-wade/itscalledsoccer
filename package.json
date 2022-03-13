@@ -6,7 +6,10 @@
   "scripts": {
     "build": "babel src -d dist",
     "watch": "chokidar \"src/*.js\" -c \"npm run build\"",
-    "test": "jest"
+    "test": "jest",
+    "prepublish": "npm run build && npm run test",
+    "prepare": "husky install",
+    "lint": "eslint src/**.js tst/**.js"
   },
   "keywords": [
     "soccer"
@@ -27,6 +30,15 @@
     "@babel/core": "^7.17.5",
     "@babel/preset-env": "^7.16.11",
     "chokidar-cli": "^3.0.0",
-    "jest": "^27.5.1"
+    "eslint": "^8.11.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-jest": "^26.1.1",
+    "husky": "^7.0.4",
+    "jest": "^27.5.1",
+    "lint-staged": "^12.3.5",
+    "prettier": "2.5.1"
+  },
+  "lint-staged": {
+    "**/*": "prettier --write --ignore-unknown"
   }
 }
