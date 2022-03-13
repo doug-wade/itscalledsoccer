@@ -1,4 +1,4 @@
-// Our needs are very sophisticated, and neither is this function.
+// Our needs aren't very sophisticated, and neither is this function.
 export default (word) => {
   if (word === "stadium") {
     return "stadia";

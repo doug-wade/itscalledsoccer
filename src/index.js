@@ -20,47 +20,24 @@ export default class Client {
   #fuse;
 
   /* utils */
-  async #initializeDependentEntities({ entityTypes }) {
+  async #getDependentEntities({ entityTypes }) {
     return Promise.all(
       entityTypes.map(async (entity) => {
-        if (this[entity]) {
-          return this[entity];
+        if (CACHE.has(entity)) {
+          return CACHE.get(entity);
         }
 
         const result = await this.#getEntity({ entity });
-        this[entity] = result;
+        CACHE.set(entity, result);
         return result;
       })
     );
   }
 
-  async #convertNameToId({ name, entityType }) {
-    const entities = await this.#initializeDependentEntities({
-      entityTypes: [entityType],
-    });
-
-    if (!this.#fuse) {
-      // Since there is only ever a single entityType, this is a needlessly complicated way to write `entities[0]`
-      const list = entities.reduce(
-        (accumulator, entity) => accumulator.concat(entity),
-        []
-      );
-
-      this.#fuse = new Fuse(list, { includeScore: true });
-    }
-
-    const result = this.#fuse.search(name);
-    console.log("result", result);
-    if (!result[0] || result[0].score < MIN_FUSE_SCORE) {
-      throw new Error(`Name ${name} does not match any known name`);
-    }
-
-    return result[0].item;
-  }
-
   async #getEntity({ entity }) {
     const pluralEntity = pluralize(entity);
-    return Promise.all(
+
+    const leagueArray = await Promise.all(
       LEAGUES.map(async (league) => {
         const url = `${BASE_URL}${league}/${pluralEntity}`;
         const result = await fetch(url);
@@ -68,28 +45,53 @@ export default class Client {
         return result.json();
       })
     );
+
+    return leagueArray.reduce((accumulator, league) => {
+      accumulator.concat(league);
+      return accumulator;
+    });
+  }
+
+  async #convertNameToId({ name, entityType }) {
+    const dependentEntities = await this.#getDependentEntities({
+      entityTypes: [entityType],
+    });
+    const players = dependentEntities[0];
+
+    if (!this.#fuse) {
+      this.#fuse = new Fuse(players, {
+        includeScore: true,
+        keys: ["player_name"], // TODO: stadia and managers and stuff
+      });
+    }
+
+    const result = this.#fuse.search(name);
+    if (!result[0] || result[0].score < MIN_FUSE_SCORE) {
+      throw new Error(`Name ${name} does not match any known name`);
+    }
+
+    return result[0].item;
   }
 
   /* public-facing api */
-  async getPlayers({ leagues = LEAGUES, ids, names } = {}) {
-    // take a defensive copy
-    let concatenatedIds = ids ? [...ids] : [];
+  async getPlayers({ leagues = LEAGUES, ids = [], names } = {}) {
+    let concatenatedIds = [...ids];
 
     if (names) {
-      const nameIds = await Promise.all(
-        names.map((name) => {
-          try {
-            this.#convertNameToId({ name, entityType: ENTITY_TYPES.PLAYER });
-          } catch (e) {
-            console.error(e);
-          }
-        })
+      const players = await Promise.all(
+        names.map((name) =>
+          this.#convertNameToId({ name, entityType: ENTITY_TYPES.PLAYER })
+        )
       );
+      const nameIds = players.map((player) => player.player_id);
 
       concatenatedIds = [...concatenatedIds, ...nameIds];
     }
 
     const results = await Promise.all(
+      // TODO: When we have ids, we fetch the data for all leagues, regardless of whether we have a player
+      // in that league or not. If we've already fetched the players, it makes sense for us to only fetch
+      // those leagues that have a player in them.
       leagues.map(async (league) => {
         const url = `${BASE_URL}${league}/players${
           concatenatedIds ? "?player_id=" + concatenatedIds.join(",") : ""
