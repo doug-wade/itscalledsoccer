@@ -6,10 +6,12 @@
   "scripts": {
     "build": "babel src -d dist",
     "watch": "chokidar \"src/*.js\" -c \"npm run build\"",
-    "test": "npm run lint && jest",
-    "prepublish": "npm run build && npm run test",
+    "test": "npm run lint && jest tst/*.test.js",
+    "prepublishOnly": "npm run build && npm run test",
     "prepare": "husky install",
-    "lint": "eslint src/**.js tst/**.js"
+    "lint": "eslint src/**.js tst/**.js",
+    "watch-unit-test": "jest tst/*.test.js --watchAll",
+    "unit-test": "jest tst/*.test.js"
   },
   "keywords": [
     "soccer"
