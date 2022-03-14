@@ -12,7 +12,7 @@ export default class Client {
   #fuses = new Map();
   #minimumFuseScore;
 
-  constructor({ minimumFuseScore }) {
+  constructor({ minimumFuseScore } = {}) {
     this.#minimumFuseScore = minimumFuseScore || MIN_FUSE_SCORE;
   }
 
