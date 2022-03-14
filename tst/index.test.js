@@ -67,7 +67,7 @@ describe("getXgoals", () => {
     const mockGeneralPosition = "W";
 
     const client = new Client();
-    const results = await client.getXgoals({
+    await client.getXgoals({
       leagues: [mockLeague],
       seasonName: mockSeasonName,
       generalPosition: mockGeneralPosition,
