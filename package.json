@@ -23,6 +23,7 @@
     "url": "https://github.com/doug-wade/itscalledsoccer"
   },
   "dependencies": {
+    "change-case": "^4.1.2",
     "core-js": "^3.21.1",
     "fuse.js": "^6.5.3",
     "isomorphic-fetch": "^3.0.0",

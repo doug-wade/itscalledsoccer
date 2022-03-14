@@ -2,6 +2,7 @@ import fetch from "isomorphic-fetch";
 import "core-js/stable";
 import "regenerator-runtime/runtime";
 import Fuse from "fuse.js";
+import { snakeCase } from "change-case";
 
 import pluralize from "./pluralize";
 import { BASE_URL, ENTITY_TYPES, LEAGUES, MIN_FUSE_SCORE } from "./constants";
@@ -218,5 +219,34 @@ export default class Client {
       entityType: ENTITY_TYPES.TEAM,
       leagues,
     });
+  }
+
+  async getXgoals({ leagues = LEAGUES, ...args }) {
+    try {
+      const urls = leagues.map((league) => {
+        const url = new URL(`${BASE_URL}${league}/players/xgoals`);
+        if (Object.keys(args).length > 0) {
+          Object.entries(args).forEach(([key, val]) => {
+            url.searchParams.set(snakeCase(key), val);
+          });
+        }
+        return url;
+      });
+      const results = await Promise.all(
+        urls.map(async (url) => {
+          const result = await fetch(url.href);
+          const jsonResult = await result.json();
+
+          return jsonResult;
+        })
+      );
+      const xgoals = results.reduce(
+        (accumulator, result) => accumulator.concat(result),
+        []
+      );
+      return xgoals;
+    } catch (e) {
+      console.error(e);
+    }
   }
 }

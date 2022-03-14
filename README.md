@@ -60,3 +60,14 @@ const asaReferees = await client.getReferees({});
 // Get all stadia
 const asaStadia = await client.getStadia({});
 ```
+
+### getXgoals
+
+```javascript
+// Get Xgoals for all MLS wingers in 2021
+const asaXgoals = await client.getXgoals({
+  leagues: ["mls"],
+  seasonName: "2021",
+  generalPosition: "W",
+});
+```
