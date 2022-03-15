@@ -158,7 +158,6 @@ export default class Client {
           url.searchParams.set(snakeCase(key), val);
         });
       }
-      console.log(url);
       return url;
     });
     const results = await Promise.all(
@@ -258,6 +257,14 @@ export default class Client {
     return this.#getStats({
       leagues,
       urlFragment: "/players/xpass",
+      urlParams: args,
+    });
+  }
+
+  async getPlayersGoalsAdded({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/players/goals-added",
       urlParams: args,
     });
   }

@@ -80,3 +80,12 @@ const asaXpass = await client.getPlayersXpass({
   playerId: ["aDQ0PKPRQE", "aDQ0PkRRQE"],
 });
 ```
+
+### getPlayersGoalsAdded
+
+```javascript
+const asaGoalsAdded = await client.getPlayersGoalsAdded({
+  minimumMinutes: 1000,
+  splitByTeams: true,
+});
+```
