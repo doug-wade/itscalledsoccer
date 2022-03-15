@@ -150,6 +150,31 @@ export default class Client {
     return results.reduce((acc, curr) => acc.concat(curr), []);
   }
 
+  async #getStats({ leagues, urlFragment, urlParams }) {
+    const urls = leagues.map((league) => {
+      const url = new URL(`${BASE_URL}${league}${urlFragment}`);
+      if (Object.keys(urlParams).length > 0) {
+        Object.entries(urlParams).forEach(([key, val]) => {
+          url.searchParams.set(snakeCase(key), val);
+        });
+      }
+      console.log(url);
+      return url;
+    });
+    const results = await Promise.all(
+      urls.map(async (url) => {
+        const result = await fetch(url.href);
+        const jsonResult = await result.json();
+
+        return jsonResult;
+      })
+    );
+    return results.reduce(
+      (accumulator, result) => accumulator.concat(result),
+      []
+    );
+  }
+
   /* public-facing api */
   async getPlayers({ leagues = LEAGUES, ids = [], names } = {}) {
     const nameIds = await this.#getEntityIdsByName({
@@ -221,32 +246,19 @@ export default class Client {
     });
   }
 
-  async getXgoals({ leagues = LEAGUES, ...args }) {
-    try {
-      const urls = leagues.map((league) => {
-        const url = new URL(`${BASE_URL}${league}/players/xgoals`);
-        if (Object.keys(args).length > 0) {
-          Object.entries(args).forEach(([key, val]) => {
-            url.searchParams.set(snakeCase(key), val);
-          });
-        }
-        return url;
-      });
-      const results = await Promise.all(
-        urls.map(async (url) => {
-          const result = await fetch(url.href);
-          const jsonResult = await result.json();
+  async getPlayersXgoals({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/players/xgoals",
+      urlParams: args,
+    });
+  }
 
-          return jsonResult;
-        })
-      );
-      const xgoals = results.reduce(
-        (accumulator, result) => accumulator.concat(result),
-        []
-      );
-      return xgoals;
-    } catch (e) {
-      console.error(e);
-    }
+  async getPlayersXpass({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/players/xpass",
+      urlParams: args,
+    });
   }
 }
