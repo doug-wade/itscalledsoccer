@@ -2,79 +2,123 @@ import fetch from "isomorphic-fetch";
 
 import Client from "../src";
 import { BASE_URL, LEAGUES } from "../src/constants";
-import mockXgoalsPayload from "./mocks/xgoals-payload";
+import mockPlayersXgoalsPayload from "./mocks/players-xgoals-payload";
+import mockPlayersXpassPayload from "./mocks/players-xpass-payload";
 
 jest.mock("isomorphic-fetch");
 
 describe("client", () => {
-  it("instantiates with no arguments", () => {
-    expect(() => {
-      new Client();
-    }).not.toThrow();
+  describe("constructor", () => {
+    it("instantiates with no arguments", () => {
+      expect(() => {
+        new Client();
+      }).not.toThrow();
+    });
+
+    it("instantiates with the minimumFuseScore argument", () => {
+      expect(() => {
+        new Client({ minimumFuseScore: 0.75 });
+      }).not.toThrow();
+    });
   });
 
-  it("instantiates with the minimumFuseScore argument", () => {
-    expect(() => {
-      new Client({ minimumFuseScore: 0.75 });
-    }).not.toThrow();
-  });
-});
+  describe("get players methods", () => {
+    const testParameters = [
+      {
+        method: "getPlayersXpass",
+        payload: mockPlayersXpassPayload,
+        urlFragment: "/players/xpass",
+      },
+      {
+        method: "getPlayersXgoals",
+        payload: mockPlayersXgoalsPayload,
+        urlFragment: "/players/xgoals",
+      },
+    ];
 
-describe("getXgoals", () => {
-  beforeEach(() => {
-    jest.resetAllMocks();
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
 
-    fetch.mockImplementation(() =>
-      Promise.resolve({
-        async json() {
-          return mockXgoalsPayload;
-        },
-      })
+    it.each(testParameters)(
+      "gets with no arguments",
+      async ({ method, payload, urlFragment }) => {
+        fetch.mockImplementation(() =>
+          Promise.resolve({
+            async json() {
+              return payload;
+            },
+          })
+        );
+        const client = new Client();
+        const results = await client[method]({});
+
+        expect(fetch).toHaveBeenCalledTimes(LEAGUES.length);
+        LEAGUES.forEach((league) => {
+          expect(fetch).toHaveBeenCalledWith(
+            `${BASE_URL}${league}${urlFragment}`
+          );
+        });
+        expect(results.length).toBe(payload.length * LEAGUES.length);
+      }
     );
-  });
 
-  it("gets with no arguments", async () => {
-    const client = new Client();
-    const results = await client.getXgoals({});
+    it.each(testParameters)(
+      "gets with leagues argument",
+      async ({ method, payload, urlFragment }) => {
+        fetch.mockImplementation(() =>
+          Promise.resolve({
+            async json() {
+              return payload;
+            },
+          })
+        );
+        const leaguesArgument = [LEAGUES[0], LEAGUES[2]];
 
-    expect(fetch).toHaveBeenCalledTimes(LEAGUES.length);
-    LEAGUES.forEach((league) => {
-      expect(fetch).toHaveBeenCalledWith(`${BASE_URL}${league}/players/xgoals`);
-    });
-    expect(results.length).toBe(mockXgoalsPayload.length * LEAGUES.length);
-  });
+        const client = new Client();
+        const results = await client[method]({
+          leagues: leaguesArgument,
+        });
 
-  it("gets with leagues argument", async () => {
-    const leaguesArgument = [LEAGUES[0], LEAGUES[2]];
-
-    const client = new Client();
-    const results = await client.getXgoals({ leagues: leaguesArgument });
-
-    expect(fetch).toHaveBeenCalledTimes(leaguesArgument.length);
-    leaguesArgument.forEach((leagueArgument) => {
-      expect(fetch).toHaveBeenCalledWith(
-        `${BASE_URL}${leagueArgument}/players/xgoals`
-      );
-    });
-    expect(results.length).toBe(
-      mockXgoalsPayload.length * leaguesArgument.length
+        expect(fetch).toHaveBeenCalledTimes(leaguesArgument.length);
+        leaguesArgument.forEach((leagueArgument) => {
+          expect(fetch).toHaveBeenCalledWith(
+            `${BASE_URL}${leagueArgument}${urlFragment}`
+          );
+        });
+        expect(results.length).toBe(payload.length * leaguesArgument.length);
+      }
     );
-  });
 
-  it("gets with other arguments", async () => {
-    const mockLeague = LEAGUES[1];
-    const mockSeasonName = "2021";
-    const mockGeneralPosition = "W";
+    it.each(testParameters)(
+      "gets with other arguments",
+      async ({ method, payload, urlFragment }) => {
+        fetch.mockImplementation(() =>
+          Promise.resolve({
+            async json() {
+              return payload;
+            },
+          })
+        );
+        const mockLeague = LEAGUES[1];
+        const mockMinimumPasses = 42;
+        const mockMinimumMinutes = 1000;
+        const mockSeasonName = "2021";
+        const mockGeneralPosition = "W";
 
-    const client = new Client();
-    await client.getXgoals({
-      leagues: [mockLeague],
-      seasonName: mockSeasonName,
-      generalPosition: mockGeneralPosition,
-    });
+        const client = new Client();
+        await client[method]({
+          leagues: [mockLeague],
+          minimumPasses: mockMinimumPasses,
+          minimumMinutes: mockMinimumMinutes,
+          seasonName: mockSeasonName,
+          generalPosition: mockGeneralPosition,
+        });
 
-    expect(fetch).toHaveBeenCalledWith(
-      `${BASE_URL}${mockLeague}/players/xgoals?season_name=${mockSeasonName}&general_position=${mockGeneralPosition}`
+        expect(fetch).toHaveBeenCalledWith(
+          `${BASE_URL}${mockLeague}${urlFragment}?minimum_passes=${mockMinimumPasses}&minimum_minutes=${mockMinimumMinutes}&season_name=${mockSeasonName}&general_position=${mockGeneralPosition}`
+        );
+      }
     );
   });
 });
