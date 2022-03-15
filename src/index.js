@@ -268,4 +268,12 @@ export default class Client {
       urlParams: args,
     });
   }
+
+  async getPlayersSalaries({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/players/salaries",
+      urlParams: args,
+    });
+  }
 }
