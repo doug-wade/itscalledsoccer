@@ -95,3 +95,18 @@ const asaGoalsAdded = await client.getPlayersGoalsAdded({
 ```javascript
 const asaXgoals = await client.getGoalkeepersXgoals({ leagues: ["mls"] });
 ```
+
+### getGoalkeepersXgoals
+
+```javascript
+const asaXgoals = await client.getGoalkeepersGoalsAdded({ leagues: ["mls"] });
+```
+
+### getGoalkeepersGoalsAdded
+
+```javascript
+const asaGoalsAdded = await client.getGoalkeepersGoalsAdded({
+  actionType: "Sweeping",
+  splitByTeams: true,
+});
+```

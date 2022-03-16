@@ -6,7 +6,8 @@ import mockPlayersXgoalsPayload from "./mocks/players-xgoals-payload";
 import mockPlayersXpassPayload from "./mocks/players-xpass-payload";
 import mockPlayersGoalsAddedPayload from "./mocks/players-goals-added-payload";
 import mockPlayersSalariesPayload from "./mocks/players-salaries-payload";
-import mockGoalkeepersXgoalsPayload from "./mocks/players-salaries-payload";
+import mockGoalkeepersXgoalsPayload from "./mocks/goalkeepers-xgoals-payload";
+import mockGoalkeepersGoalsAddedPayload from "./mocks/goalkeepers-goals-added-payload";
 
 jest.mock("isomorphic-fetch");
 
@@ -51,6 +52,11 @@ describe("client", () => {
         method: "getGoalkeepersXgoals",
         payload: mockGoalkeepersXgoalsPayload,
         urlFragment: "/goalkeepers/xgoals",
+      },
+      {
+        method: "getGoalkeepersGoalsAdded",
+        payload: mockGoalkeepersGoalsAddedPayload,
+        urlFragment: "/goalkeepers/goals-added",
       },
     ];
 
