@@ -316,4 +316,12 @@ export default class Client {
       urlParams: args,
     });
   }
+
+  async getTeamsSalaries({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/teams/salaries",
+      urlParams: args,
+    });
+  }
 }

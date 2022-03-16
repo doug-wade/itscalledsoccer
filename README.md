@@ -136,3 +136,11 @@ const asaGoalsAdded = await client.getTeamsGoalsAdded({
   zone: 27,
 });
 ```
+
+### getTeamsSalaries
+
+```javascript
+const asaSalaries = await client.getTeamsSalaries({
+  seasonName: "2015",
+});
+```
