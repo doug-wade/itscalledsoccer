@@ -180,7 +180,7 @@ export default class Client {
   }
 
   /* public-facing api */
-  async getPlayers({ leagues = LEAGUES, ids = [], names } = {}) {
+  async getPlayers({ leagues = LEAGUES, ids = [], names = [] } = {}) {
     const nameIds = await this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.PLAYER,
@@ -194,7 +194,7 @@ export default class Client {
     });
   }
 
-  async getManagers({ leagues = LEAGUES, ids = [], names = [] }) {
+  async getManagers({ leagues = LEAGUES, ids = [], names = [] } = {}) {
     const nameIds = await this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.MANAGER,
@@ -208,7 +208,7 @@ export default class Client {
     });
   }
 
-  async getStadia({ leagues = LEAGUES, ids = [], names = [] }) {
+  async getStadia({ leagues = LEAGUES, ids = [], names = [] } = {}) {
     const nameIds = await this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.STADIUM,
@@ -222,7 +222,7 @@ export default class Client {
     });
   }
 
-  async getReferees({ leagues = LEAGUES, ids = [], names = [] }) {
+  async getReferees({ leagues = LEAGUES, ids = [], names = [] } = {}) {
     const nameIds = await this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.REFEREE,
@@ -236,7 +236,7 @@ export default class Client {
     });
   }
 
-  async getTeams({ leagues = LEAGUES, ids = [], names = [] }) {
+  async getTeams({ leagues = LEAGUES, ids = [], names = [] } = {}) {
     const nameIds = await this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.TEAM,
@@ -250,7 +250,7 @@ export default class Client {
     });
   }
 
-  async getPlayersXgoals({ leagues = LEAGUES, ...args }) {
+  async getPlayersXgoals({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/players/xgoals",
@@ -258,7 +258,7 @@ export default class Client {
     });
   }
 
-  async getPlayersXpass({ leagues = LEAGUES, ...args }) {
+  async getPlayersXpass({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/players/xpass",
@@ -266,7 +266,7 @@ export default class Client {
     });
   }
 
-  async getPlayersGoalsAdded({ leagues = LEAGUES, ...args }) {
+  async getPlayersGoalsAdded({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/players/goals-added",
@@ -274,7 +274,7 @@ export default class Client {
     });
   }
 
-  async getPlayersSalaries({ leagues = LEAGUES, ...args }) {
+  async getPlayersSalaries({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/players/salaries",
@@ -282,7 +282,7 @@ export default class Client {
     });
   }
 
-  async getGoalkeepersXgoals({ leagues = LEAGUES, ...args }) {
+  async getGoalkeepersXgoals({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/goalkeepers/xgoals",
@@ -290,7 +290,7 @@ export default class Client {
     });
   }
 
-  async getGoalkeepersGoalsAdded({ leagues = LEAGUES, ...args }) {
+  async getGoalkeepersGoalsAdded({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/goalkeepers/goals-added",
@@ -298,7 +298,7 @@ export default class Client {
     });
   }
 
-  async getTeamsXgoals({ leagues = LEAGUES, ...args }) {
+  async getTeamsXgoals({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/xgoals",
@@ -306,7 +306,7 @@ export default class Client {
     });
   }
 
-  async getTeamsXpass({ leagues = LEAGUES, ...args }) {
+  async getTeamsXpass({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/xpass",
@@ -314,7 +314,7 @@ export default class Client {
     });
   }
 
-  async getTeamsGoalsAdded({ leagues = LEAGUES, ...args }) {
+  async getTeamsGoalsAdded({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/goals-added",
@@ -322,7 +322,7 @@ export default class Client {
     });
   }
 
-  async getTeamsSalaries({ leagues = LEAGUES, ...args }) {
+  async getTeamsSalaries({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/salaries",
@@ -330,7 +330,7 @@ export default class Client {
     });
   }
 
-  async getGamesXgoals({ leagues = LEAGUES, ...args }) {
+  async getGamesXgoals({ leagues = LEAGUES, ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/games/xgoals",

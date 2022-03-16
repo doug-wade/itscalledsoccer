@@ -51,14 +51,14 @@ const asaTeam = await client.getStadia({ leagues: ["mls"] });
 
 ```javascript
 // Get all referees
-const asaReferees = await client.getReferees({});
+const asaReferees = await client.getReferees();
 ```
 
 ### getStadia
 
 ```javascript
 // Get all stadia
-const asaStadia = await client.getStadia({});
+const asaStadia = await client.getStadia();
 ```
 
 ### getPlayersXgoals
