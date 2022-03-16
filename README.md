@@ -128,3 +128,11 @@ const asaXpass = await client.getTeamsXpass({
   awayOnly: true,
 });
 ```
+
+### getTeamsGoalsAdded
+
+```javascript
+const asaGoalsAdded = await client.getTeamsGoalsAdded({
+  zone: 27,
+});
+```
