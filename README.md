@@ -110,3 +110,12 @@ const asaGoalsAdded = await client.getGoalkeepersGoalsAdded({
   splitByTeams: true,
 });
 ```
+
+### getTeamsXgoals
+
+```javascript
+const asaGoalsAdded = await client.getTeamsXgoals({
+  homeAdjusted: true,
+  shotPattern: "Fastbreak",
+});
+```

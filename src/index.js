@@ -292,4 +292,12 @@ export default class Client {
       urlParams: args,
     });
   }
+
+  async getTeamsXgoals({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/teams/xgoals",
+      urlParams: args,
+    });
+  }
 }
