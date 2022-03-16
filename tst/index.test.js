@@ -131,7 +131,7 @@ describe("client", () => {
           })
         );
         const client = new Client();
-        const results = await client[method]({});
+        const results = await client[method]();
 
         expect(fetch).toHaveBeenCalledTimes(LEAGUES.length);
         LEAGUES.forEach((league) => {
