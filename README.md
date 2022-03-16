@@ -119,3 +119,12 @@ const asaGoalsAdded = await client.getTeamsXgoals({
   shotPattern: "Fastbreak",
 });
 ```
+
+### getTeamsXpass
+
+```javascript
+const asaXpass = await client.getTeamsXpass({
+  stageName: "MLS is Back Group Stage",
+  awayOnly: true,
+});
+```

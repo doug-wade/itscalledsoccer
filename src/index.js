@@ -300,4 +300,12 @@ export default class Client {
       urlParams: args,
     });
   }
+
+  async getTeamsXpass({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/teams/xpass",
+      urlParams: args,
+    });
+  }
 }
