@@ -144,3 +144,11 @@ const asaSalaries = await client.getTeamsSalaries({
   seasonName: "2015",
 });
 ```
+
+### getGamesXgoals
+
+```javascript
+const asaXgoals = await client.getGamesXgoals({
+  stageName: "Playoffs",
+});
+```
