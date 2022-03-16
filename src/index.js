@@ -151,6 +151,11 @@ export default class Client {
   }
 
   async #getStats({ leagues, urlFragment, urlParams }) {
+    console.assert(
+      leagues.every((league) => Object.values(LEAGUES).includes(league)),
+      `leagues must be an array of LEAGUES, fetchEntity got ${leagues}`
+    );
+
     const urls = leagues.map((league) => {
       const url = new URL(`${BASE_URL}${league}${urlFragment}`);
       if (Object.keys(urlParams).length > 0) {

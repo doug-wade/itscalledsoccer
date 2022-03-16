@@ -33,6 +33,30 @@ describe("client", () => {
     });
   });
 
+  describe("parameter validation", () => {
+    it("logs to the console when an invalid league is provided", async () => {
+      const mockLeague = "la liga";
+      jest.spyOn(console, "assert").mockImplementation();
+      fetch.mockImplementation(() =>
+        Promise.resolve({
+          async json() {
+            return [];
+          },
+        })
+      );
+
+      const client = new Client();
+      await client.getGoalkeepersGoalsAdded({
+        leagues: [mockLeague],
+      });
+
+      expect(console.assert).toHaveBeenCalledWith(
+        false,
+        `leagues must be an array of LEAGUES, fetchEntity got ${mockLeague}`
+      );
+    });
+  });
+
   describe("get players methods", () => {
     const testParameters = [
       {
