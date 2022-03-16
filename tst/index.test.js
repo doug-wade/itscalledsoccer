@@ -2,6 +2,8 @@ import fetch from "isomorphic-fetch";
 
 import Client from "../src";
 import { BASE_URL, LEAGUES } from "../src/constants";
+
+// fetch payload mocks
 import mockPlayersXgoalsPayload from "./mocks/players-xgoals-payload";
 import mockPlayersXpassPayload from "./mocks/players-xpass-payload";
 import mockPlayersGoalsAddedPayload from "./mocks/players-goals-added-payload";
@@ -12,6 +14,7 @@ import mockTeamsXgoalsPayload from "./mocks/teams-xgoals-payload";
 import mockTeamsXpassPayload from "./mocks/teams-xpass-payload";
 import mockTeamsGoalsAddedPayload from "./mocks/teams-goals-added-payload";
 import mockTeamsSalariesPayload from "./mocks/teams-salaries-payload";
+import mockGamesXgoalsPayload from "./mocks/games-xgoals-payload";
 
 jest.mock("isomorphic-fetch");
 
@@ -81,6 +84,11 @@ describe("client", () => {
         method: "getTeamsSalaries",
         payload: mockTeamsSalariesPayload,
         urlFragment: "/teams/salaries",
+      },
+      {
+        method: "getGamesXgoals",
+        payload: mockGamesXgoalsPayload,
+        urlFragment: "/games/xgoals",
       },
     ];
 
