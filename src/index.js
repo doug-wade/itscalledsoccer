@@ -308,4 +308,12 @@ export default class Client {
       urlParams: args,
     });
   }
+
+  async getTeamsGoalsAdded({ leagues = LEAGUES, ...args }) {
+    return this.#getStats({
+      leagues,
+      urlFragment: "/teams/goals-added",
+      urlParams: args,
+    });
+  }
 }

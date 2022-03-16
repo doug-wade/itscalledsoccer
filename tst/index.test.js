@@ -10,6 +10,7 @@ import mockGoalkeepersXgoalsPayload from "./mocks/goalkeepers-xgoals-payload";
 import mockGoalkeepersGoalsAddedPayload from "./mocks/goalkeepers-goals-added-payload";
 import mockTeamsXgoalsPayload from "./mocks/teams-xgoals-payload";
 import mockTeamsXpassPayload from "./mocks/teams-xpass-payload";
+import mockTeamsGoalsAddedPayload from "./mocks/teams-goals-added-payload";
 
 jest.mock("isomorphic-fetch");
 
@@ -69,6 +70,11 @@ describe("client", () => {
         method: "getTeamsXpass",
         payload: mockTeamsXpassPayload,
         urlFragment: "/teams/xpass",
+      },
+      {
+        method: "getTeamsGoalsAdded",
+        payload: mockTeamsGoalsAddedPayload,
+        urlFragment: "/teams/goals-added",
       },
     ];
 
