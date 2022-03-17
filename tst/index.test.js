@@ -1,9 +1,18 @@
 import fetch from "isomorphic-fetch";
+import pluralize from "../src/pluralize";
 
 import Client from "../src";
-import { BASE_URL, LEAGUES } from "../src/constants";
+import { BASE_URL, ENTITY_TYPES, LEAGUES } from "../src/constants";
+
+import { playersXgoalsParameters } from "../src/parameters.js";
 
 // fetch payload mocks
+import mockPlayersPayload from "./mocks/players-payload";
+import mockManagersPayload from "./mocks/managers-payload";
+import mockRefereesPayload from "./mocks/referees-payload";
+import mockStadiaPayload from "./mocks/stadia-payload";
+import mockTeamsPayload from "./mocks/teams-payload";
+
 import mockPlayersXgoalsPayload from "./mocks/players-xgoals-payload";
 import mockPlayersXpassPayload from "./mocks/players-xpass-payload";
 import mockPlayersGoalsAddedPayload from "./mocks/players-goals-added-payload";
@@ -46,18 +55,42 @@ describe("client", () => {
       );
 
       const client = new Client();
-      await client.getGoalkeepersGoalsAdded({
+      await client.getPlayersXgoals({
         leagues: [mockLeague],
       });
 
       expect(console.assert).toHaveBeenCalledWith(
         false,
-        `leagues must be an array of LEAGUES, fetchEntity got ${mockLeague}`
+        `leagues must be an array of nwsl, mls, uslc, usl1, nasl, fetchEntity got ${mockLeague}`
+      );
+    });
+
+    it("logs to the console when an invalid url parameter is provided", async () => {
+      const mockKey = "cristianRoldan";
+      jest.spyOn(console, "assert").mockImplementation();
+      fetch.mockImplementation(() =>
+        Promise.resolve({
+          async json() {
+            return [];
+          },
+        })
+      );
+
+      const client = new Client();
+      await client.getPlayersXgoals({
+        [mockKey]: "mock value",
+      });
+
+      expect(console.assert).toHaveBeenCalledWith(
+        false,
+        `Url parameters must be one of ${Array.from(
+          playersXgoalsParameters.values()
+        ).join(", ")}, got ${mockKey}`
       );
     });
   });
 
-  describe("get players methods", () => {
+  describe("getStats methods", () => {
     const testParameters = [
       {
         method: "getPlayersXpass",
@@ -133,13 +166,15 @@ describe("client", () => {
         const client = new Client();
         const results = await client[method]();
 
-        expect(fetch).toHaveBeenCalledTimes(LEAGUES.length);
-        LEAGUES.forEach((league) => {
+        expect(fetch).toHaveBeenCalledTimes(Object.keys(LEAGUES).length);
+        Object.values(LEAGUES).forEach((league) => {
           expect(fetch).toHaveBeenCalledWith(
             `${BASE_URL}${league}${urlFragment}`
           );
         });
-        expect(results.length).toBe(payload.length * LEAGUES.length);
+        expect(results.length).toBe(
+          payload.length * Object.keys(LEAGUES).length
+        );
       }
     );
 
@@ -153,7 +188,7 @@ describe("client", () => {
             },
           })
         );
-        const leaguesArgument = [LEAGUES[0], LEAGUES[2]];
+        const leaguesArgument = [LEAGUES.MLS, LEAGUES.NWSL];
 
         const client = new Client();
         const results = await client[method]({
@@ -180,7 +215,7 @@ describe("client", () => {
             },
           })
         );
-        const mockLeague = LEAGUES[1];
+        const mockLeague = LEAGUES.USLC;
         const mockMinimumPasses = 42;
         const mockMinimumMinutes = 1000;
         const mockSeasonName = "2021";
@@ -198,6 +233,149 @@ describe("client", () => {
         expect(fetch).toHaveBeenCalledWith(
           `${BASE_URL}${mockLeague}${urlFragment}?minimum_passes=${mockMinimumPasses}&minimum_minutes=${mockMinimumMinutes}&season_name=${mockSeasonName}&general_position=${mockGeneralPosition}`
         );
+      }
+    );
+  });
+
+  describe("getEntity methods", () => {
+    const testParameters = [
+      {
+        method: "getPlayers",
+        entityType: ENTITY_TYPES.PLAYER,
+        payload: mockPlayersPayload,
+      },
+      {
+        method: "getManagers",
+        entityType: ENTITY_TYPES.MANAGER,
+        payload: mockManagersPayload,
+      },
+      {
+        method: "getStadia",
+        entityType: ENTITY_TYPES.STADIUM,
+        payload: mockStadiaPayload,
+      },
+      {
+        method: "getReferees",
+        entityType: ENTITY_TYPES.REFEREE,
+        payload: mockRefereesPayload,
+      },
+      {
+        method: "getTeams",
+        entityType: ENTITY_TYPES.TEAM,
+        payload: mockTeamsPayload,
+      },
+    ];
+
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
+
+    it.each(testParameters)(
+      "gets with no arguments",
+      async ({ method, entityType, payload }) => {
+        fetch.mockImplementation(() =>
+          Promise.resolve({
+            async json() {
+              return payload;
+            },
+          })
+        );
+        const client = new Client();
+        const results = await client[method]();
+
+        expect(fetch).toHaveBeenCalledTimes(Object.keys(LEAGUES).length);
+        Object.values(LEAGUES).forEach((league) => {
+          expect(fetch).toHaveBeenCalledWith(
+            `${BASE_URL}${league}/${pluralize(entityType)}`
+          );
+        });
+        expect(results.length).toBe(
+          payload.length * Object.values(LEAGUES).length
+        );
+      }
+    );
+
+    it.each(testParameters)(
+      "gets with ids",
+      async ({ method, entityType, payload }) => {
+        const mockIds = ["abc", "123"];
+        fetch.mockImplementation(() =>
+          Promise.resolve({
+            async json() {
+              return payload;
+            },
+          })
+        );
+
+        const client = new Client();
+        await client[method]({ ids: mockIds });
+
+        Object.values(LEAGUES).forEach((league) => {
+          expect(fetch).toHaveBeenCalledWith(
+            `${BASE_URL}${league}/${pluralize(
+              entityType
+            )}?${entityType}_id=${mockIds.join(",")}`
+          );
+        });
+      }
+    );
+  });
+
+  describe("getEntityByName methods", () => {
+    const testParameters = [
+      {
+        method: "getPlayersByName",
+        entityType: ENTITY_TYPES.PLAYER,
+        payload: mockPlayersPayload,
+        mockName: "Ugo Ihemelu",
+      },
+      {
+        method: "getManagersByName",
+        entityType: ENTITY_TYPES.MANAGER,
+        payload: mockManagersPayload,
+        mockName: "Josh Wolff",
+      },
+      {
+        method: "getStadiaByName",
+        entityType: ENTITY_TYPES.STADIUM,
+        payload: mockStadiaPayload,
+        mockName: "PNC Stadium",
+      },
+      {
+        method: "getRefereesByName",
+        entityType: ENTITY_TYPES.REFEREE,
+        payload: mockRefereesPayload,
+        mockName: "Alan Kelly",
+      },
+      {
+        method: "getTeamsByName",
+        entityType: ENTITY_TYPES.TEAM,
+        payload: mockTeamsPayload,
+        mockName: "New England Revolution",
+      },
+    ];
+
+    it.each(testParameters)(
+      "gets names",
+      async ({ method, entityType, payload, mockName }) => {
+        fetch.mockImplementation(() =>
+          Promise.resolve({
+            async json() {
+              return payload;
+            },
+          })
+        );
+
+        const client = new Client({ minimumFuseScore: 0.1 });
+        const result = await client[method]({
+          names: [mockName],
+          leagues: ["mls"],
+        });
+
+        expect(fetch).toHaveBeenCalledWith(
+          `${BASE_URL}mls/${pluralize(entityType)}`
+        );
+        expect(result[0][`${pluralize(entityType)}`]).toHaveLength(1);
       }
     );
   });
