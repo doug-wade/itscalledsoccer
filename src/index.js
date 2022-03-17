@@ -6,8 +6,12 @@ import { snakeCase } from "change-case";
 
 import pluralize from "./pluralize";
 import { BASE_URL, ENTITY_TYPES, LEAGUES, MIN_FUSE_SCORE } from "./constants";
-
-const CACHE = new Map();
+import {
+  validateLeagues,
+  validateStringArray,
+  validateUrlParameters,
+} from "./validators";
+import { playersXgoalsParameters } from "./parameters.js";
 
 export default class Client {
   #fuses = new Map();
@@ -18,117 +22,60 @@ export default class Client {
   }
 
   /* utils */
-  async #getDependentEntities({ entityTypes }) {
-    console.assert(
-      entityTypes.every((entityType) =>
-        Object.values(ENTITY_TYPES).includes(entityType)
-      ),
-      `entityTypes must be an array of ENTITY_TYPES; getDependentEntities got ${entityTypes}`
-    );
-
-    return Promise.all(
-      entityTypes.map(async (entityType) => {
-        if (CACHE.has(entityType)) {
-          return CACHE.get(entityType);
-        }
-
-        const result = await this.#getEntity({ entityType });
-        CACHE.set(entityType, result);
-        return result;
-      })
-    );
-  }
-
-  async #getEntity({ entityType }) {
-    console.assert(
-      Object.values(ENTITY_TYPES).includes(entityType),
-      `entity must be one of ENTITY_TYPES, getEntity got ${entityType}`
-    );
-    const pluralEntityType = pluralize(entityType);
-
-    const leagueArray = await Promise.all(
-      LEAGUES.map(async (league) => {
-        const url = `${BASE_URL}${league}/${pluralEntityType}`;
-
-        const result = await fetch(url);
-
-        return result.json();
-      })
-    );
-
-    return leagueArray.reduce((accumulator, league) => {
-      accumulator.concat(league);
-      return accumulator;
-    });
-  }
-
-  async #convertNameToId({ name, entityType }) {
-    console.assert(
-      typeof name === "string",
-      `name must be a string, convertNameToId got: ${name}`
-    );
-    console.assert(
-      Object.values(ENTITY_TYPES).includes(entityType),
-      `entityType must be one of ENTITY_TYPES; convertNameToId got ${entityType}`
-    );
-
-    const dependentEntities = await this.#getDependentEntities({
-      entityTypes: [entityType],
-    });
-    const players = dependentEntities[0];
+  async #convertNameToId({ name, entityType, league }) {
+    const fuseKey = `${league}|${entityType}`;
 
     let fuse;
     if (!this.#fuses.has(entityType)) {
-      fuse = new Fuse(players, {
+      const pluralEntityType = pluralize(entityType);
+      const url = `${BASE_URL}${league}/${pluralEntityType}`;
+      const result = await fetch(url);
+      const entities = await result.json();
+      fuse = new Fuse(entities, {
         includeScore: true,
         keys: [`${entityType}_name`],
       });
-      this.#fuses.set(entityType, fuse);
+      this.#fuses.set(fuseKey, fuse);
     } else {
-      fuse = this.#fuses.get(entityType);
+      fuse = this.#fuses.get(fuseKey);
     }
 
     const result = fuse.search(name);
-    if (!result[0] || result[0].score < this.#minimumFuseScore) {
+
+    if (!result[0] || result[0].score > this.#minimumFuseScore) {
       throw new Error(`Name ${name} does not match any known name`);
     }
 
     return result[0].item;
   }
 
-  async #getEntityIdsByName({ names = [], entityType }) {
-    console.assert(
-      Object.values(ENTITY_TYPES).includes(entityType),
-      `entityType must be one of ENTITY_TYPES; getEntityIdsByName got ${entityType}`
-    );
-
+  async #getEntityIdsByName({ names = [], entityType, leagues }) {
     if (!names.length) {
-      return [];
+      const entities = new Map();
+
+      leagues.forEach((league) => {
+        entities.set(league, []);
+      });
+
+      return entities;
     }
 
-    const entities = await Promise.all(
-      names.map((name) =>
-        this.#convertNameToId({ name, entityType: ENTITY_TYPES.PLAYER })
-      )
-    );
+    return Promise.all(
+      leagues.map(async (league) => {
+        const entities = await Promise.all(
+          names.map((name) =>
+            this.#convertNameToId({ name, entityType, league })
+          )
+        );
 
-    return entities.map((entity) => entity[`${entityType}_id`]);
+        const entityIds = entities.map((entity) => entity[`${entityType}_id`]);
+
+        return { league, [`${pluralize(entityType)}`]: entityIds };
+      })
+    );
   }
 
   async #fetchEntity({ leagues, entityType, ids }) {
-    console.assert(
-      leagues.every((league) => Object.values(LEAGUES).includes(league)),
-      `leagues must be an array of LEAGUES, fetchEntity got ${leagues}`
-    );
-    console.assert(
-      Object.values(ENTITY_TYPES).includes(entityType),
-      `entityType must be one of ENTITY_TYPES, fetchEntity got ${entityType}`
-    );
-    console.assert(
-      Array.isArray(ids),
-      `ids must be an array of strings, fetchEntity got ${ids}`
-    );
-
     const results = await Promise.all(
       leagues.map(async (league) => {
         const url = `${BASE_URL}${league}/${pluralize(entityType)}${
@@ -151,11 +98,6 @@ export default class Client {
   }
 
   async #getStats({ leagues, urlFragment, urlParams }) {
-    console.assert(
-      leagues.every((league) => Object.values(LEAGUES).includes(league)),
-      `leagues must be an array of LEAGUES, fetchEntity got ${leagues}`
-    );
-
     const urls = leagues.map((league) => {
       const url = new URL(`${BASE_URL}${league}${urlFragment}`);
       if (Object.keys(urlParams).length > 0) {
@@ -180,77 +122,162 @@ export default class Client {
   }
 
   /* public-facing api */
-  async getPlayers({ leagues = LEAGUES, ids = [], names = [] } = {}) {
-    const nameIds = await this.#getEntityIdsByName({
+  async getPlayersByName({
+    leagues = Object.values(LEAGUES),
+    names = [],
+  } = {}) {
+    validateStringArray({
+      strings: names,
+      message: `names must be an array of strings, got ${names}`,
+    });
+    validateLeagues({ leagues });
+
+    return this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.PLAYER,
+      leagues,
     });
-    const concatenatedIds = [...nameIds, ...ids];
+  }
+
+  async getPlayers({ leagues = Object.values(LEAGUES), ids = [] } = {}) {
+    validateStringArray({
+      strings: ids,
+      message: `ids must be an array of strings, got ${ids}`,
+    });
+    validateLeagues({ leagues });
 
     return this.#fetchEntity({
-      ids: concatenatedIds,
+      ids,
       entityType: ENTITY_TYPES.PLAYER,
       leagues,
     });
   }
 
-  async getManagers({ leagues = LEAGUES, ids = [], names = [] } = {}) {
-    const nameIds = await this.#getEntityIdsByName({
+  async getManagersByName({
+    leagues = Object.values(LEAGUES),
+    names = [],
+  } = {}) {
+    validateStringArray({
+      strings: names,
+      message: `names must be an array of strings, got ${names}`,
+    });
+    validateLeagues({ leagues });
+
+    return this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.MANAGER,
+      leagues,
     });
-    const concatenatedIds = [...nameIds, ...ids];
+  }
+
+  async getManagers({ leagues = Object.values(LEAGUES), ids = [] } = {}) {
+    validateStringArray({
+      strings: ids,
+      message: `ids must be an array of strings, got ${ids}`,
+    });
+    validateLeagues({ leagues });
 
     return this.#fetchEntity({
-      ids: concatenatedIds,
+      ids,
       entityType: ENTITY_TYPES.MANAGER,
       leagues,
     });
   }
 
-  async getStadia({ leagues = LEAGUES, ids = [], names = [] } = {}) {
-    const nameIds = await this.#getEntityIdsByName({
+  async getStadiaByName({ leagues = Object.values(LEAGUES), names = [] } = {}) {
+    validateStringArray({
+      strings: names,
+      message: `names must be an array of strings, got ${names}`,
+    });
+    validateLeagues({ leagues });
+
+    return this.#getEntityIdsByName({
       names,
       entityType: ENTITY_TYPES.STADIUM,
+      leagues,
     });
-    const concatenatedIds = [...nameIds, ...ids];
+  }
+
+  async getStadia({ leagues = Object.values(LEAGUES), ids = [] } = {}) {
+    validateStringArray({
+      strings: ids,
+      message: `ids must be an array of strings, got ${ids}`,
+    });
+    validateLeagues({ leagues });
 
     return this.#fetchEntity({
-      ids: concatenatedIds,
+      ids,
       entityType: ENTITY_TYPES.STADIUM,
       leagues,
     });
   }
 
-  async getReferees({ leagues = LEAGUES, ids = [], names = [] } = {}) {
-    const nameIds = await this.#getEntityIdsByName({
-      names,
-      entityType: ENTITY_TYPES.REFEREE,
+  async getRefereesByName({
+    leagues = Object.values(LEAGUES),
+    names = [],
+  } = {}) {
+    validateStringArray({
+      strings: names,
+      message: `names must be an array of strings, got ${names}`,
     });
-    const concatenatedIds = [...nameIds, ...ids];
+    validateLeagues({ leagues });
 
-    return this.#fetchEntity({
-      ids: concatenatedIds,
+    return this.#getEntityIdsByName({
+      names,
       entityType: ENTITY_TYPES.REFEREE,
       leagues,
     });
   }
 
-  async getTeams({ leagues = LEAGUES, ids = [], names = [] } = {}) {
-    const nameIds = await this.#getEntityIdsByName({
-      names,
-      entityType: ENTITY_TYPES.TEAM,
+  async getReferees({ leagues = Object.values(LEAGUES), ids = [] } = {}) {
+    validateStringArray({
+      strings: ids,
+      message: `ids must be an array of strings, got ${ids}`,
     });
-    const concatenatedIds = [...nameIds, ...ids];
+    validateLeagues({ leagues });
 
     return this.#fetchEntity({
-      ids: concatenatedIds,
+      ids,
+      entityType: ENTITY_TYPES.REFEREE,
+      leagues,
+    });
+  }
+
+  async getTeamsByName({ leagues = Object.values(LEAGUES), names = [] } = {}) {
+    validateStringArray({
+      strings: names,
+      message: `names must be an array of strings, got ${names}`,
+    });
+    validateLeagues({ leagues });
+
+    return this.#getEntityIdsByName({
+      names,
       entityType: ENTITY_TYPES.TEAM,
       leagues,
     });
   }
 
-  async getPlayersXgoals({ leagues = LEAGUES, ...args } = {}) {
+  async getTeams({ leagues = Object.values(LEAGUES), ids = [] } = {}) {
+    validateStringArray({
+      strings: ids,
+      message: `ids must be an array of strings, got ${ids}`,
+    });
+    validateLeagues({ leagues });
+
+    return this.#fetchEntity({
+      ids,
+      entityType: ENTITY_TYPES.TEAM,
+      leagues,
+    });
+  }
+
+  async getPlayersXgoals({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: playersXgoalsParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/players/xgoals",
@@ -258,7 +285,7 @@ export default class Client {
     });
   }
 
-  async getPlayersXpass({ leagues = LEAGUES, ...args } = {}) {
+  async getPlayersXpass({ leagues = Object.values(LEAGUES), ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/players/xpass",
@@ -266,7 +293,10 @@ export default class Client {
     });
   }
 
-  async getPlayersGoalsAdded({ leagues = LEAGUES, ...args } = {}) {
+  async getPlayersGoalsAdded({
+    leagues = Object.values(LEAGUES),
+    ...args
+  } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/players/goals-added",
@@ -274,7 +304,7 @@ export default class Client {
     });
   }
 
-  async getPlayersSalaries({ leagues = LEAGUES, ...args } = {}) {
+  async getPlayersSalaries({ leagues = Object.values(LEAGUES), ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/players/salaries",
@@ -282,7 +312,10 @@ export default class Client {
     });
   }
 
-  async getGoalkeepersXgoals({ leagues = LEAGUES, ...args } = {}) {
+  async getGoalkeepersXgoals({
+    leagues = Object.values(LEAGUES),
+    ...args
+  } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/goalkeepers/xgoals",
@@ -290,7 +323,10 @@ export default class Client {
     });
   }
 
-  async getGoalkeepersGoalsAdded({ leagues = LEAGUES, ...args } = {}) {
+  async getGoalkeepersGoalsAdded({
+    leagues = Object.values(LEAGUES),
+    ...args
+  } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/goalkeepers/goals-added",
@@ -298,7 +334,7 @@ export default class Client {
     });
   }
 
-  async getTeamsXgoals({ leagues = LEAGUES, ...args } = {}) {
+  async getTeamsXgoals({ leagues = Object.values(LEAGUES), ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/xgoals",
@@ -306,7 +342,7 @@ export default class Client {
     });
   }
 
-  async getTeamsXpass({ leagues = LEAGUES, ...args } = {}) {
+  async getTeamsXpass({ leagues = Object.values(LEAGUES), ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/xpass",
@@ -314,7 +350,7 @@ export default class Client {
     });
   }
 
-  async getTeamsGoalsAdded({ leagues = LEAGUES, ...args } = {}) {
+  async getTeamsGoalsAdded({ leagues = Object.values(LEAGUES), ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/goals-added",
@@ -322,7 +358,7 @@ export default class Client {
     });
   }
 
-  async getTeamsSalaries({ leagues = LEAGUES, ...args } = {}) {
+  async getTeamsSalaries({ leagues = Object.values(LEAGUES), ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/teams/salaries",
@@ -330,7 +366,7 @@ export default class Client {
     });
   }
 
-  async getGamesXgoals({ leagues = LEAGUES, ...args } = {}) {
+  async getGamesXgoals({ leagues = Object.values(LEAGUES), ...args } = {}) {
     return this.#getStats({
       leagues,
       urlFragment: "/games/xgoals",
