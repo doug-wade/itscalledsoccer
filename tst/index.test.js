@@ -355,6 +355,10 @@ describe("client", () => {
       },
     ];
 
+    beforeEach(() => {
+      jest.resetAllMocks();
+    });
+
     it.each(testParameters)(
       "gets names",
       async ({ method, entityType, payload, mockName }) => {
@@ -376,6 +380,19 @@ describe("client", () => {
           `${BASE_URL}mls/${pluralize(entityType)}`
         );
         expect(result[0][`${pluralize(entityType)}`]).toHaveLength(1);
+      }
+    );
+
+    it.each(testParameters)(
+      "gets no results with no names",
+      async ({ method }) => {
+        const client = new Client();
+        const result = await client[method]();
+
+        expect(fetch).not.toHaveBeenCalled();
+        result.forEach((entry) => {
+          expect(entry).toHaveLength(0);
+        });
       }
     );
   });

@@ -11,7 +11,19 @@ import {
   validateStringArray,
   validateUrlParameters,
 } from "./validators";
-import { playersXgoalsParameters } from "./parameters.js";
+import {
+  playersXgoalsParameters,
+  playersXpassParameters,
+  playersGoalsAddedParameters,
+  playersSalariesParameters,
+  goalkeepersXgoalsParameters,
+  goalkeepersGoalsAddedParameters,
+  teamsXgoalsParameters,
+  teamsXpassParameters,
+  teamsGoalsAddedParameters,
+  teamsSalariesParameters,
+  gamesXgoalsParameters,
+} from "./parameters.js";
 
 export default class Client {
   #fuses = new Map();
@@ -29,8 +41,15 @@ export default class Client {
     if (!this.#fuses.has(entityType)) {
       const pluralEntityType = pluralize(entityType);
       const url = `${BASE_URL}${league}/${pluralEntityType}`;
-      const result = await fetch(url);
-      const entities = await result.json();
+      const response = await fetch(url);
+
+      if (response.status >= 400) {
+        throw new Error(
+          `Got a bad response from the server: ${response.status}`
+        );
+      }
+
+      const entities = await response.json();
       fuse = new Fuse(entities, {
         includeScore: true,
         keys: [`${entityType}_name`],
@@ -109,10 +128,15 @@ export default class Client {
     });
     const results = await Promise.all(
       urls.map(async (url) => {
-        const result = await fetch(url.href);
-        const jsonResult = await result.json();
+        const response = await fetch(url.href);
 
-        return jsonResult;
+        if (response.status >= 400) {
+          throw new Error(
+            `Got a bad response from the server: ${response.status}`
+          );
+        }
+
+        return response.json();
       })
     );
     return results.reduce(
@@ -286,6 +310,12 @@ export default class Client {
   }
 
   async getPlayersXpass({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: playersXpassParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/players/xpass",
@@ -297,6 +327,12 @@ export default class Client {
     leagues = Object.values(LEAGUES),
     ...args
   } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: playersGoalsAddedParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/players/goals-added",
@@ -305,6 +341,12 @@ export default class Client {
   }
 
   async getPlayersSalaries({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: playersSalariesParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/players/salaries",
@@ -316,6 +358,12 @@ export default class Client {
     leagues = Object.values(LEAGUES),
     ...args
   } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: goalkeepersXgoalsParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/goalkeepers/xgoals",
@@ -327,6 +375,12 @@ export default class Client {
     leagues = Object.values(LEAGUES),
     ...args
   } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: goalkeepersGoalsAddedParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/goalkeepers/goals-added",
@@ -335,6 +389,12 @@ export default class Client {
   }
 
   async getTeamsXgoals({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: teamsXgoalsParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/teams/xgoals",
@@ -343,6 +403,12 @@ export default class Client {
   }
 
   async getTeamsXpass({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: teamsXpassParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/teams/xpass",
@@ -351,6 +417,12 @@ export default class Client {
   }
 
   async getTeamsGoalsAdded({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: teamsGoalsAddedParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/teams/goals-added",
@@ -359,6 +431,12 @@ export default class Client {
   }
 
   async getTeamsSalaries({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: teamsSalariesParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/teams/salaries",
@@ -367,6 +445,12 @@ export default class Client {
   }
 
   async getGamesXgoals({ leagues = Object.values(LEAGUES), ...args } = {}) {
+    validateLeagues({ leagues });
+    validateUrlParameters({
+      validParameters: gamesXgoalsParameters,
+      providedArguments: args,
+    });
+
     return this.#getStats({
       leagues,
       urlFragment: "/games/xgoals",
