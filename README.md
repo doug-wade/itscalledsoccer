@@ -44,7 +44,7 @@ const asaManager = await client.getManagers({ ids: ["odMXxreMYL"] });
 
 ```javascript
 // Get all MLS stadia
-const asaTeam = await client.getStadia({ leagues: ["mls"] });
+const asaTeam = await client.getTeams({ leagues: ["mls"] });
 ```
 
 ### getReferees
